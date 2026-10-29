@@ -8,7 +8,7 @@ import '../di/injection.dart';
 class MobileApiConfig {
   static const String defaultBaseUrl = String.fromEnvironment(
     'EDUT_WEB_API_BASE_URL',
-    defaultValue: 'https://web-ces-bourja.vercel.app',
+    defaultValue: 'https://web-up-ar-rahama.vercel.app',
   );
 
   static String _activeBaseUrl = defaultBaseUrl;
