@@ -1,13 +1,13 @@
-﻿import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseConfig {
   static const String url = String.fromEnvironment(
     'SUPABASE_URL',
-    defaultValue: 'https://hxweqrfgqlrzjcjjemme.supabase.co',
+    defaultValue: 'https://gyzyfctvmwsngicjlhrt.supabase.co',
   );
   static const String anonKey = String.fromEnvironment(
     'SUPABASE_ANON_KEY',
-    defaultValue: 'sb_publishable_wyxNZnhEVc0r-m1XZZrxNQ_OoV-H5vD',
+    defaultValue: 'sb_publishable_K2JinfWif3_GLU6C6T5sDQ_JzofW6CU',
   );
 }
 
