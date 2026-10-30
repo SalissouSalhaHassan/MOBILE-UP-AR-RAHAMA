@@ -11,7 +11,7 @@
         android:maxSdkVersion="32" />
 
     <application
-        android:label="U P AR-RAHAMA"
+        android:label="U.P.R"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

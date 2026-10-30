@@ -62,7 +62,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'EDUT PRO - U P AR-RAHAMA',
+      title: 'U.P.R',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       routerConfig: AppRouter.router,
