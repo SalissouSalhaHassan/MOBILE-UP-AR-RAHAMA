@@ -1,4 +1,4 @@
-package com.edut.cegraouda
+package com.upr.rahama
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 
