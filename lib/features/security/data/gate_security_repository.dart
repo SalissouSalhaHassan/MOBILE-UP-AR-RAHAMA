@@ -114,7 +114,7 @@ class GateSecurityRepository {
         final now = DateTime.now();
         final timeStr = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
         final isExit = action == 'exit';
-        final waText = '*CES BOURJA - MARADI • SÉCURITÉ CAMPUS* 🛡️\n\nBonjour Cher Parent,\nNous vous informons que votre enfant *$nom* ($classe) a été contrôlé au portail de l\'établissement (*${isExit ? "Sortie" : "Entrée"}*) à $timeStr.\n\n_Plateforme Numérique CES BOURJA_';
+        final waText = '*U P AR-RAHAMA - MARADI • SÉCURITÉ CAMPUS* 🛡️\n\nBonjour Cher Parent,\nNous vous informons que votre enfant *$nom* ($classe) a été contrôlé au portail de l\'établissement (*${isExit ? "Sortie" : "Entrée"}*) à $timeStr.\n\n_Plateforme Numérique U P AR-RAHAMA_';
         whatsappAlert = {
           'phone': cleanPhone,
           'message': waText,
@@ -127,7 +127,7 @@ class GateSecurityRepository {
         'valid': true,
         'offline': true,
         'alertLevel': 'green',
-        'decisionReason': 'Vérifié hors-ligne • Élève inscrit à CES BOURJA',
+        'decisionReason': 'Vérifié hors-ligne • Étudiant inscrit à U P AR-RAHAMA',
         'financialStatus': {
           'isUpToDate': solde <= 0,
           'balance': solde,
@@ -149,7 +149,7 @@ class GateSecurityRepository {
           'whatsapp': parentPhone,
         },
         'school': {
-          'name': 'CES BOURJA',
+          'name': 'U P AR-RAHAMA',
         },
       };
     } catch (e) {

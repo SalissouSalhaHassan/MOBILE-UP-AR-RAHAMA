@@ -228,7 +228,7 @@ class _OfflineVectorSchoolMapState extends State<OfflineVectorSchoolMap> {
   static const List<SchoolMapPoint> _defaultSampleSchools = [
     SchoolMapPoint(
       id: "1",
-      name: "CES BOURJA - COMPLEXE PRINCIPAL",
+      name: "U P AR-RAHAMA - CAMPUS PRINCIPAL",
       region: "Niamey - District 1",
       xRatio: 0.28,
       yRatio: 0.65,
