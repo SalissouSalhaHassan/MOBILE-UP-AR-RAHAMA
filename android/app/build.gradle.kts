@@ -32,7 +32,11 @@ android {
         create("release") {
             keyAlias = keystoreProperties.getProperty("keyAlias")
             keyPassword = keystoreProperties.getProperty("keyPassword")
-            storeFile = keystoreProperties.getProperty("storeFile")?.let { file(it) }
+            storeFile = keystoreProperties.getProperty("storeFile")?.let { fileName ->
+                val inApp = file(fileName)
+                val inAndroid = rootProject.file(fileName)
+                if (inApp.exists()) inApp else inAndroid
+            }
             storePassword = keystoreProperties.getProperty("storePassword")
         }
     }
