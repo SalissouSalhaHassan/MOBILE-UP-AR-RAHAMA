@@ -132,51 +132,49 @@ class _StudentFeeDetailsScreenState extends State<StudentFeeDetailsScreen> {
         freshFee['total_expected'] = 45000.0;
       }
 
-      // Re-calculate totals from payments if payments exist to guarantee 100% sync
+      // Re-calculate totals from payments and scholarships with 100% web parity
+      final double exp = currentExp > 0 ? currentExp : 
+                        (freshFee['total_expected'] != null 
+                            ? _safeDouble(freshFee['total_expected']) 
+                            : _safeDouble(_currentFee['total_expected']));
+
+      double paidSum = 0.0;
+      double reductionFromPayments = 0.0;
       if (paymentsList.isNotEmpty) {
-        double paidSum = 0.0;
-        double reductionSum = 0.0;
         for (var p in paymentsList) {
           paidSum += _safeDouble(p['amount']);
-          reductionSum += _safeDouble(p['reduction']);
+          reductionFromPayments += _safeDouble(p['reduction']);
         }
-        final expected = currentExp > 0 ? currentExp : _safeDouble(freshFee['total_expected']);
-        final balance = (expected - paidSum - reductionSum).clamp(0.0, double.infinity);
-        final status = balance <= 0 ? 'Soldé' : paidSum > 0 ? 'Partiel' : 'Impayé';
-
-        freshFee['total_paid'] = paidSum;
-        freshFee['total_reduction'] = reductionSum;
-        freshFee['balance'] = balance;
-        freshFee['status'] = status;
       } else {
-        // DO NOT reset balance to total_expected! Preserve existing cached paid amount and calculate true balance.
-        final double curPaid = freshFee['total_paid'] != null 
+        paidSum = freshFee['total_paid'] != null 
             ? _safeDouble(freshFee['total_paid']) 
             : _safeDouble(_currentFee['total_paid']);
-        final double curRed = freshFee['total_reduction'] != null 
-            ? _safeDouble(freshFee['total_reduction']) 
-            : _safeDouble(_currentFee['total_reduction']);
-        final double exp = currentExp > 0 ? currentExp : 
-                          (freshFee['total_expected'] != null 
-                              ? _safeDouble(freshFee['total_expected']) 
-                              : _safeDouble(_currentFee['total_expected']));
-        // Check intelligent scholarship deduction if total_reduction is 0
-        double effectiveRed = curRed;
-        final schData = freshFee['scholarship'] ?? _currentFee['scholarship'];
-        if (effectiveRed <= 0 && schData != null) {
-          final pct = _safeDouble(schData['discount_percentage'] ?? freshFee['scholarship_percentage'] ?? _currentFee['scholarship_percentage']);
-          final alloc = _safeDouble(schData['allocated_amount']);
-          effectiveRed = alloc > 0 ? alloc : (exp * pct / 100);
-        } else if (effectiveRed <= 0 && (_currentFee['scholarship_name'] != null || freshFee['scholarship_name'] != null)) {
-          effectiveRed = (exp * 0.5); // Default 50% for recognized scholarship
-        }
-
-        freshFee['total_paid'] = curPaid;
-        freshFee['total_reduction'] = effectiveRed;
-        freshFee['total_expected'] = exp;
-        freshFee['balance'] = (exp - curPaid - effectiveRed).clamp(0.0, double.infinity);
-        freshFee['status'] = freshFee['balance'] <= 0 ? 'Soldé' : curPaid > 0 ? 'Partiel' : 'Impayé';
       }
+
+      // Check scholarship deduction from freshFee, widget, or calculation
+      final double baseRed = freshFee['total_reduction'] != null && _safeDouble(freshFee['total_reduction']) > 0
+          ? _safeDouble(freshFee['total_reduction'])
+          : _safeDouble(_currentFee['total_reduction']);
+
+      double totalReduction = baseRed > reductionFromPayments ? baseRed : reductionFromPayments;
+
+      final schData = freshFee['scholarship'] ?? _currentFee['scholarship'];
+      if (totalReduction <= 0 && schData != null) {
+        final pct = _safeDouble(schData['discount_percentage'] ?? freshFee['scholarship_percentage'] ?? _currentFee['scholarship_percentage']);
+        final alloc = _safeDouble(schData['allocated_amount']);
+        totalReduction = alloc > 0 ? alloc : (exp * pct / 100);
+      } else if (totalReduction <= 0 && (_currentFee['scholarship_name'] != null || freshFee['scholarship_name'] != null)) {
+        totalReduction = exp * 0.5; // Default 50% for recognized scholarship
+      }
+
+      final balance = (exp - paidSum - totalReduction).clamp(0.0, double.infinity);
+      final status = balance <= 0 ? 'Soldé' : paidSum > 0 ? 'Partiel' : 'Impayé';
+
+      freshFee['total_paid'] = paidSum;
+      freshFee['total_reduction'] = totalReduction;
+      freshFee['total_expected'] = exp;
+      freshFee['balance'] = balance;
+      freshFee['status'] = status;
 
       final canCollect = await locator<PermissionService>()
           .hasPermission(AppPermissions.financeCollect);
