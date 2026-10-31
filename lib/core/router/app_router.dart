@@ -392,13 +392,13 @@ class AppRouter {
           permission: AppPermissions.financeView,
           child: FinanceDashboardScreen(),
         ),
+      ),
       GoRoute(
         path: '/finance/bourses-echeanciers',
         builder: (context, state) => const GuardedScreen(
           permission: AppPermissions.financeView,
           child: SmartBoursesEcheanciersScreen(),
         ),
-      ),
       ),
       GoRoute(
         path: '/finance/unified-report',
