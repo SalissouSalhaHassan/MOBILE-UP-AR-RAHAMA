@@ -387,7 +387,7 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              'AMITCHI • GESTION SCOLAIRE',
+              'ADMINISTRATION SCOLAIRE',
               style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, letterSpacing: 1.0, color: Color(0xFF818CF8)),
             ),
             Text(
@@ -603,68 +603,134 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
 
         const SizedBox(height: 16),
 
-        // Photo Dossier Card
+        // Photo Dossier Card (Parity with Web UI)
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: const Color(0xFF111827),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFF1F2937)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 70,
-                height: 70,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFF334155)),
-                ),
-                child: _photoPath != null && _photoPath!.isNotEmpty
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: _photoPath!.startsWith('data:image')
-                            ? Image.memory(base64Decode(_photoPath!.split(',').last), fit: BoxFit.cover)
-                            : Image.network(_photoPath!, fit: BoxFit.cover),
-                      )
-                    : const Icon(Icons.person_rounded, size: 36, color: Color(0xFF64748B)),
+            color: const Color(0xFF0F172A),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: const Color(0xFF1E293B), width: 1.5),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x33000000),
+                blurRadius: 16,
+                offset: Offset(0, 6),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Photographie du dossier', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                    const SizedBox(height: 2),
-                    const Text('Requis pour la carte scolaire', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
-                    const SizedBox(height: 10),
-                    Row(
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Photo Avatar / Camera Preview
+                  GestureDetector(
+                    onTap: () => _pickPhoto(ImageSource.gallery),
+                    child: Container(
+                      width: 82,
+                      height: 82,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E293B),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFF334155), width: 2),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x40000000),
+                            blurRadius: 10,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: _photoPath != null && _photoPath!.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(18),
+                              child: _photoPath!.startsWith('data:image')
+                                  ? Image.memory(base64Decode(_photoPath!.split(',').last), fit: BoxFit.cover)
+                                  : Image.network(_photoPath!, fit: BoxFit.cover),
+                            )
+                          : const Center(
+                              child: Icon(Icons.person_rounded, size: 42, color: Color(0xFF475569)),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ElevatedButton.icon(
-                          onPressed: () => _pickPhoto(ImageSource.camera),
-                          icon: const Icon(Icons.camera_alt_rounded, size: 14, color: Colors.white),
-                          label: const Text('Caméra', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF4F46E5),
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        const Text(
+                          'Photographie du dossier',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 15,
+                            letterSpacing: -0.2,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        OutlinedButton.icon(
-                          onPressed: () => _pickPhoto(ImageSource.gallery),
-                          icon: const Icon(Icons.photo_library_rounded, size: 14, color: Color(0xFF818CF8)),
-                          label: const Text('Galerie', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF818CF8))),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFF312E81)),
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        const SizedBox(height: 3),
+                        const Text(
+                          'REQUIS POUR LA CARTE SCOLAIRE',
+                          style: TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.8,
                           ),
+                        ),
+                        const SizedBox(height: 12),
+                        // Actions Row: UPLOAD & CAMÉRA matching Web design
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => _pickPhoto(ImageSource.gallery),
+                                icon: const Icon(Icons.file_upload_outlined, size: 15, color: Color(0xFF818CF8)),
+                                label: const Text('UPLOAD', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, letterSpacing: 0.5, color: Colors.white)),
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF1E293B),
+                                  side: const BorderSide(color: Color(0xFF334155)),
+                                  padding: const EdgeInsets.symmetric(vertical: 11),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => _pickPhoto(ImageSource.camera),
+                                icon: const Icon(Icons.camera_alt_outlined, size: 15, color: Color(0xFF818CF8)),
+                                label: const Text('CAMÉRA', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, letterSpacing: 0.5, color: Colors.white)),
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF1E293B),
+                                  side: const BorderSide(color: Color(0xFF334155)),
+                                  padding: const EdgeInsets.symmetric(vertical: 11),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // SMART AI SCAN Button (Matching Web UI)
+              ElevatedButton.icon(
+                onPressed: () => _pickPhoto(ImageSource.camera),
+                icon: const Icon(Icons.bolt_rounded, size: 16, color: Color(0xFFFBBF24)),
+                label: const Text(
+                  'SMART AI SCAN',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.8, color: Color(0xFF818CF8)),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1E1B4B),
+                  side: const BorderSide(color: Color(0xFF3730A3)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
               ),
             ],
