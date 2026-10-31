@@ -2052,7 +2052,7 @@ class FinanceRepository {
             {
               'id': 2,
               'name': 'Exonération Institutionnelle / Partenariat',
-              'provider': 'Direction Générale de l'Établissement',
+              "provider": "Direction Generale de l'Etablissement",
               'type': 'Pourcentage',
               'discount_value': 25.0,
               'applies_to': 'Frais de Scolarité',
@@ -2061,7 +2061,7 @@ class FinanceRepository {
             {
               'id': 3,
               'name': 'Bourse Sociale / Aide Étudiante',
-              'provider': 'Fonds d'Action Sociale Universitaire',
+              "provider": "Fonds d'Action Sociale Universitaire",
               'type': 'Pourcentage',
               'discount_value': 30.0,
               'applies_to': 'Frais de Scolarité',
