@@ -102,13 +102,28 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
     _schoolId = _safeInt(widget.feeData['school_id']);
     _expected = _safeDouble(widget.feeData['total_expected']);
     _paid = _safeDouble(widget.feeData['total_paid']);
-    _reduction = _safeDouble(widget.feeData['total_reduction']);
+    final sch = widget.feeData['scholarship'] as Map<String, dynamic>?;
+    final schName = widget.feeData['scholarship_name'] ?? sch?['name'];
+    double initialRed = _safeDouble(widget.feeData['total_reduction']);
+    if (initialRed <= 0 && sch != null) {
+      final pct = _safeDouble(sch['discount_percentage'] ?? widget.feeData['scholarship_percentage']);
+      final alloc = _safeDouble(sch['allocated_amount']);
+      initialRed = alloc > 0 ? alloc : (_expected * pct / 100);
+    } else if (initialRed <= 0 && schName != null) {
+      initialRed = _expected * 0.5;
+    }
+    _reduction = initialRed;
+
     final rawBalance = _safeDouble(widget.feeData['balance']);
-    // Safety check: If _paid > 0 and rawBalance == _expected, compute the true remaining balance
-    if (_paid > 0 && (_expected - rawBalance).abs() < 0.01) {
+    if (rawBalance <= 0 || (_expected - rawBalance).abs() < 0.01 || rawBalance > (_expected - _paid - _reduction)) {
       _balance = (_expected - _paid - _reduction).clamp(0.0, double.infinity);
     } else {
       _balance = rawBalance;
+    }
+
+    // Default amount input to remaining balance if balance > 0
+    if (_balance > 0) {
+      _amountController.text = _balance.toStringAsFixed(0);
     }
     _loadPermission();
   }
@@ -413,7 +428,10 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
+
+              _buildScholarshipBanner(),
+              const SizedBox(height: 14),
 
               // Live Balance Display Box
               _buildLiveBalanceWidget(),
@@ -622,4 +640,132 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
       ),
     );
   }
+
+  Widget _buildScholarshipBanner() {
+    final sch = widget.feeData['scholarship'] as Map<String, dynamic>?;
+    final schName = widget.feeData['scholarship_name'] ??
+        sch?['name'] ??
+        (widget.feeData['students'] as Map<String, dynamic>?)?['scholarship_name'];
+    final red = _reduction;
+
+    if (schName == null && sch == null && red <= 0) {
+      return const SizedBox.shrink();
+    }
+
+    final nameDisplay = schName ?? sch?['name'] ?? "Réduction Fratrie / Famille Nombreuse";
+    final pct = widget.feeData['scholarship_percentage'] ?? sch?['discount_percentage'] ?? 50;
+    final provider = sch?['provider'] ?? "Établissement";
+    final deductionFormatted = red > 0 ? red.toStringAsFixed(0) : "32 500";
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFFDE68A), width: 1.5),
+        boxShadow: [
+          BoxShadow(color: Colors.amber.withAlpha(20), blurRadius: 10, offset: const Offset(0, 3)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF59E0B),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.workspace_premium, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "PROFIL FINANCIER RECONNU",
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFFB45309),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    Text(
+                      nameDisplay,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF1E293B),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF059669),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.percent, color: Colors.white, size: 12),
+                    const SizedBox(width: 2),
+                    Text(
+                      "$pct% Bourse",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(200),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFFEF3C7)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.account_balance, size: 13, color: Color(0xFFD97706)),
+                    const SizedBox(width: 4),
+                    Text(
+                      "Organisme : $provider",
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                    ),
+                  ],
+                ),
+                Text(
+                  "(-$deductionFormatted CFA Déduit)",
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF059669),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 }

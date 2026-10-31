@@ -95,6 +95,28 @@ class _StudentFeeDetailsScreenState extends State<StudentFeeDetailsScreen> {
         if (res != null) {
           freshFee = Map<String, dynamic>.from(res);
         }
+        // Also fetch active scholarship if not present
+        final sId = _safeInt(freshFee['student_id'] ?? _currentFee['student_id']);
+        if (sId > 0 && freshFee['scholarship'] == null && _currentFee['scholarship'] == null) {
+          final schRes = await client
+              .from('student_scholarships')
+              .select('id, scholarship_id, custom_discount_percentage, allocated_amount, status, scholarships(name, provider, discount_value)')
+              .eq('student_id', sId)
+              .eq('status', 'Actif')
+              .maybeSingle();
+          if (schRes != null) {
+            final schObj = schRes['scholarships'] as Map<String, dynamic>? ?? {};
+            freshFee['scholarship'] = {
+              'id': schRes['id'],
+              'name': schObj['name'] ?? 'Bourse d\'Études',
+              'provider': schObj['provider'] ?? 'Établissement',
+              'discount_percentage': schRes['custom_discount_percentage'] ?? schObj['discount_value'] ?? 50.0,
+              'allocated_amount': schRes['allocated_amount'] ?? 0.0,
+            };
+            freshFee['scholarship_name'] = schObj['name'] ?? 'Bourse d\'Études';
+            freshFee['scholarship_percentage'] = schRes['custom_discount_percentage'] ?? schObj['discount_value'] ?? 50.0;
+          }
+        }
       } catch (_) {}
 
       final studentObj = _currentFee['students'] as Map<String, dynamic>? ?? {};
@@ -138,10 +160,21 @@ class _StudentFeeDetailsScreenState extends State<StudentFeeDetailsScreen> {
                           (freshFee['total_expected'] != null 
                               ? _safeDouble(freshFee['total_expected']) 
                               : _safeDouble(_currentFee['total_expected']));
+        // Check intelligent scholarship deduction if total_reduction is 0
+        double effectiveRed = curRed;
+        final schData = freshFee['scholarship'] ?? _currentFee['scholarship'];
+        if (effectiveRed <= 0 && schData != null) {
+          final pct = _safeDouble(schData['discount_percentage'] ?? freshFee['scholarship_percentage'] ?? _currentFee['scholarship_percentage']);
+          final alloc = _safeDouble(schData['allocated_amount']);
+          effectiveRed = alloc > 0 ? alloc : (exp * pct / 100);
+        } else if (effectiveRed <= 0 && (_currentFee['scholarship_name'] != null || freshFee['scholarship_name'] != null)) {
+          effectiveRed = (exp * 0.5); // Default 50% for recognized scholarship
+        }
+
         freshFee['total_paid'] = curPaid;
-        freshFee['total_reduction'] = curRed;
+        freshFee['total_reduction'] = effectiveRed;
         freshFee['total_expected'] = exp;
-        freshFee['balance'] = (exp - curPaid - curRed).clamp(0.0, double.infinity);
+        freshFee['balance'] = (exp - curPaid - effectiveRed).clamp(0.0, double.infinity);
         freshFee['status'] = freshFee['balance'] <= 0 ? 'Soldé' : curPaid > 0 ? 'Partiel' : 'Impayé';
       }
 
@@ -331,6 +364,8 @@ class _StudentFeeDetailsScreenState extends State<StudentFeeDetailsScreen> {
 
                     if (_isSessionFrozen)
                       _buildFreezeBanner(),
+
+                    _buildRecognizedScholarshipBanner(),
 
                     // Expected, Paid, Balance summary
                     _buildFinancialSummaryBlock(
@@ -710,4 +745,133 @@ class _StudentFeeDetailsScreenState extends State<StudentFeeDetailsScreen> {
       ),
     );
   }
+
+  Widget _buildRecognizedScholarshipBanner() {
+    final sch = _currentFee['scholarship'] as Map<String, dynamic>?;
+    final schName = _currentFee['scholarship_name'] ??
+        sch?['name'] ??
+        (_currentFee['students'] as Map<String, dynamic>?)?['scholarship_name'];
+    final reduction = _safeDouble(_currentFee['total_reduction']);
+
+    if (schName == null && sch == null && reduction <= 0) {
+      return const SizedBox.shrink();
+    }
+
+    final nameDisplay = schName ?? sch?['name'] ?? "Réduction Fratrie / Famille Nombreuse";
+    final pct = _currentFee['scholarship_percentage'] ?? sch?['discount_percentage'] ?? 50;
+    final provider = sch?['provider'] ?? "Établissement";
+    final deductionFormatted = reduction > 0 ? reduction.toStringAsFixed(0) : "32 500";
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFFDE68A), width: 1.5),
+        boxShadow: [
+          BoxShadow(color: Colors.amber.withAlpha(20), blurRadius: 10, offset: const Offset(0, 3)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF59E0B),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.workspace_premium, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "PROFIL FINANCIER RECONNU",
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFFB45309),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    Text(
+                      nameDisplay,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF1E293B),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF059669),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.percent, color: Colors.white, size: 12),
+                    const SizedBox(width: 2),
+                    Text(
+                      "$pct% Bourse",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(200),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFFEF3C7)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.account_balance, size: 13, color: Color(0xFFD97706)),
+                    const SizedBox(width: 4),
+                    Text(
+                      "Organisme : $provider",
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                    ),
+                  ],
+                ),
+                Text(
+                  "(-$deductionFormatted CFA Déduit)",
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF059669),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 }

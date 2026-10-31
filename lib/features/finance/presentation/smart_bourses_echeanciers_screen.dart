@@ -60,7 +60,7 @@ class _SmartBoursesEcheanciersScreenState
       _schoolId = int.tryParse(sIdStr ?? '9') ?? 9;
 
       final results = await Future.wait([
-        _financeRepo.getBoursesAndEcheanciersDashboard(),
+        _financeRepo.getBoursesAndEcheanciersDashboard(schoolId: _schoolId),
         _financeRepo.getDocumentHeader(_schoolId).catchError((_) => {'success': false}),
       ]);
 
@@ -155,7 +155,7 @@ class _SmartBoursesEcheanciersScreenState
     final rawPhone = sched['studentWhatsapp'] ?? sched['studentMobile'] ?? '';
     final phone = rawPhone.toString().replaceAll(RegExp(r'[^0-9+]'), '');
 
-    final text = "🔔 *Rappel d'Échéance de Paiement - U P AR-RAHAMA*\n\n"
+    final text = "🔔 *Rappel d'Échéance de Paiement - UP/IAI*\n\n"
         "Bonjour, nous vous informons que le règlement de l'échéance *$label* d'un montant de *$bal* pour l'étudiant *$studentNom* ($matricule) est attendu.\n\n"
         "Merci de régulariser la situation auprès du service financier.";
 
@@ -707,3 +707,4 @@ class _SmartBoursesEcheanciersScreenState
     );
   }
 }
+

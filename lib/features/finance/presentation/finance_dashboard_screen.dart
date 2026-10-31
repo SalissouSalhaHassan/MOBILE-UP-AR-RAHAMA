@@ -880,11 +880,39 @@ IconButton(
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
-                        Text(
-                          "Matricule: $admissionNo • $className",
-                          style: const TextStyle(color: AppColors.slate500, fontSize: 11, fontWeight: FontWeight.w500),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            Text(
+                              "Matricule: $admissionNo • $className",
+                              style: const TextStyle(color: AppColors.slate500, fontSize: 11, fontWeight: FontWeight.w500),
+                            ),
+                            if ((feeData['total_reduction'] as num? ?? 0) > 0 || feeData['scholarship'] != null || feeData['scholarship_name'] != null) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFEF3C7),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: const Color(0xFFFDE68A)),
+                                ),
+                                child: Text(
+                                  feeData['scholarship_percentage'] != null
+                                      ? "🎓 ${feeData['scholarship_percentage']}% Bourse"
+                                      : (feeData['scholarship']?['discount_percentage'] != null
+                                          ? "🎓 ${feeData['scholarship']['discount_percentage']}% Bourse"
+                                          : "🎓 Bourse"),
+                                  style: const TextStyle(
+                                    color: Color(0xFFB45309),
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                         ),
                       ],
                     ),
