@@ -1994,5 +1994,52 @@ class FinanceRepository {
       return {'success': false, 'error': e.toString()};
     }
   }
-}
 
+  /// Fetch Bourses, Exonérations & Échéanciers mobile dashboard data
+  Future<Map<String, dynamic>> getBoursesAndEcheanciersDashboard() async {
+    try {
+      final response = await _apiClient.getJson(
+        '/api/mobile/finance/bourses-echeanciers?action=getDashboard',
+      );
+      return response;
+    } catch (e) {
+      debugPrint('Error fetching bourses & echeanciers data: ');
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  /// Trigger smart automated reminder for overdue installments in bulk
+  Future<Map<String, dynamic>> triggerBulkScheduleReminders({List<int>? scheduleIds}) async {
+    try {
+      final response = await _apiClient.postJson(
+        '/api/mobile/finance/bourses-echeanciers',
+        {
+          'action': 'triggerBulkReminders',
+          'payload': {'scheduleIds': scheduleIds},
+        },
+      );
+      return response;
+    } catch (e) {
+      debugPrint('Error triggering bulk schedule reminders: ');
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  /// Trigger reminder for a single installment
+  Future<Map<String, dynamic>> triggerSingleScheduleReminder(int scheduleId) async {
+    try {
+      final response = await _apiClient.postJson(
+        '/api/mobile/finance/bourses-echeanciers',
+        {
+          'action': 'triggerSingleReminder',
+          'payload': {'scheduleId': scheduleId},
+        },
+      );
+      return response;
+    } catch (e) {
+      debugPrint('Error triggering single schedule reminder: ');
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+}

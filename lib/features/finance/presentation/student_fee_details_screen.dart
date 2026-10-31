@@ -203,6 +203,11 @@ class _StudentFeeDetailsScreenState extends State<StudentFeeDetailsScreen> {
         ? List<Map<String, dynamic>>.from(_currentFee['payments'])
         : null;
 
+    final totalReduction = _safeDouble(_currentFee['total_reduction']);
+    final schName = _currentFee['scholarship_name'] ??
+        _currentFee['scholarship']?['name'] ??
+        student['scholarship_name'];
+
     if (!mounted) return;
     await ReceiptGenerator.showFormatAndActionDialog(
       context: context,
@@ -210,6 +215,8 @@ class _StudentFeeDetailsScreenState extends State<StudentFeeDetailsScreen> {
       payment: payment,
       totalExpected: expected,
       remainingBalance: balance,
+      totalReduction: totalReduction,
+      scholarshipName: schName,
       allPayments: allPaymentsList,
       headerConfig: headerConfig,
     );

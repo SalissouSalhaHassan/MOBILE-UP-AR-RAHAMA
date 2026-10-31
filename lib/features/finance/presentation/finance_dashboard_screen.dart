@@ -458,7 +458,12 @@ class _FinanceDashboardScreenState extends State<FinanceDashboardScreen> {
         foregroundColor: AppColors.slate900,
         elevation: 0,
         actions: [
-          IconButton(
+                    IconButton(
+            icon: const Icon(Icons.school_rounded, color: Color(0xFFD97706)),
+            onPressed: () => context.push('/finance/bourses-echeanciers'),
+            tooltip: "Bourses, Exonérations & Échéanciers",
+          ),
+IconButton(
             icon: const Icon(Icons.balance_rounded, color: Color(0xFF4F46E5)),
             onPressed: () => context.push('/finance/unified-report'),
             tooltip: "Bilan Recettes vs Dépenses (Unifié)",

@@ -74,6 +74,7 @@ import '../../features/security/presentation/gate_scanner_screen.dart';
 import '../permissions/permission_service.dart';
 import 'guarded_screen.dart';
 import '../../features/lms/presentation/lms_home_screen.dart';
+import '../../features/finance/presentation/smart_bourses_echeanciers_screen.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -391,6 +392,13 @@ class AppRouter {
           permission: AppPermissions.financeView,
           child: FinanceDashboardScreen(),
         ),
+      GoRoute(
+        path: '/finance/bourses-echeanciers',
+        builder: (context, state) => const GuardedScreen(
+          permission: AppPermissions.financeView,
+          child: SmartBoursesEcheanciersScreen(),
+        ),
+      ),
       ),
       GoRoute(
         path: '/finance/unified-report',

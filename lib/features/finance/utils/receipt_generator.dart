@@ -15,6 +15,8 @@ class ReceiptGenerator {
     required Map<String, dynamic> payment,
     required double totalExpected,
     required double remainingBalance,
+    double totalReduction = 0.0,
+    String? scholarshipName,
     List<Map<String, dynamic>>? allPayments,
     Map<String, dynamic>? headerConfig,
     PdfPageFormat pageFormat = PdfPageFormat.a5,
@@ -70,8 +72,17 @@ class ReceiptGenerator {
       return d;
     }
 
-    final totalPaid = totalExpected - remainingBalance > 0
-        ? totalExpected - remainingBalance
+    final effectiveReduction = totalReduction > 0
+        ? totalReduction
+        : _safeNum(student['total_reduction'] ?? payment['reduction'] ?? student['reduction']);
+    final effectiveScholarshipName = scholarshipName ??
+        student['scholarship_name'] ??
+        student['scholarship']?['name'] ??
+        student['scholarship']?['scholarshipName'] ??
+        payment['scholarship_name'];
+
+    final totalPaid = (totalExpected - effectiveReduction - remainingBalance) > 0
+        ? (totalExpected - effectiveReduction - remainingBalance)
         : _safeNum(payment['amount']);
     final isSolde = remainingBalance <= 0;
 
@@ -339,10 +350,28 @@ class ReceiptGenerator {
                             style: pw.TextStyle(font: amiriBold, fontSize: isA5 ? 9.5 : 11, color: darkNavy),
                           ),
                           pw.SizedBox(height: 3),
-                          _buildDetailRow(EducationalLevelHelper.getReceiptExpectedFeeLabel(stage), _formatCfa(totalExpected), amiriFont, amiriBold, isA5: isA5),
+                          _buildDetailRow(
+                            effectiveReduction > 0 ? 'Scolarit\u00e9 Brute' : EducationalLevelHelper.getReceiptExpectedFeeLabel(stage),
+                            _formatCfa(totalExpected),
+                            amiriFont,
+                            amiriBold,
+                            isA5: isA5,
+                          ),
+                          if (effectiveReduction > 0) ...[
+                            pw.SizedBox(height: 1.5),
+                            _buildDetailRow(
+                              effectiveScholarshipName != null && effectiveScholarshipName.isNotEmpty
+                                  ? 'Bourse ($effectiveScholarshipName)'
+                                  : 'Bourse / D\u00e9duction',
+                              '-${_formatCfa(effectiveReduction)}',
+                              amiriFont,
+                              amiriBold,
+                              isA5: isA5,
+                              valueColor: emeraldGreen,
+                            ),
+                          ],
                           pw.SizedBox(height: 1.5),
-                          _buildDetailRow('Total Déjà Payé', _formatCfa(totalPaid), amiriFont, amiriBold, isA5: isA5),
-                          pw.SizedBox(height: 2.5),
+                          _buildDetailRow('Total D\u00e9j\u00e0 Pay\u00e9', _formatCfa(totalPaid), amiriFont, amiriBold, isA5: isA5),pw.SizedBox(height: 2.5),
                           pw.Container(
                             padding: pw.EdgeInsets.symmetric(horizontal: isA5 ? 5 : 8, vertical: isA5 ? 2 : 3),
                             decoration: const pw.BoxDecoration(
@@ -560,6 +589,8 @@ class ReceiptGenerator {
     required Map<String, dynamic> payment,
     required double totalExpected,
     required double remainingBalance,
+    double totalReduction = 0.0,
+    String? scholarshipName,
     List<Map<String, dynamic>>? allPayments,
     Map<String, dynamic>? headerConfig,
   }) async {
@@ -684,6 +715,8 @@ class ReceiptGenerator {
                               payment: resolvedPayment,
                               totalExpected: totalExpected,
                               remainingBalance: remainingBalance,
+                              totalReduction: totalReduction,
+                              scholarshipName: scholarshipName,
                               allPayments: allPayments,
                               headerConfig: headerConfig,
                               pageFormat: selectedFormat,
@@ -709,6 +742,8 @@ class ReceiptGenerator {
                               payment: resolvedPayment,
                               totalExpected: totalExpected,
                               remainingBalance: remainingBalance,
+                              totalReduction: totalReduction,
+                              scholarshipName: scholarshipName,
                               allPayments: allPayments,
                               headerConfig: headerConfig,
                               pageFormat: selectedFormat,
@@ -732,6 +767,8 @@ class ReceiptGenerator {
     required Map<String, dynamic> payment,
     required double totalExpected,
     required double remainingBalance,
+    double totalReduction = 0.0,
+    String? scholarshipName,
     List<Map<String, dynamic>>? allPayments,
     Map<String, dynamic>? headerConfig,
     PdfPageFormat pageFormat = PdfPageFormat.a5,
@@ -747,6 +784,8 @@ class ReceiptGenerator {
       payment: payment,
       totalExpected: totalExpected,
       remainingBalance: remainingBalance,
+      totalReduction: totalReduction,
+      scholarshipName: scholarshipName,
       allPayments: allPayments,
       headerConfig: headerConfig,
       pageFormat: pageFormat,
@@ -774,6 +813,8 @@ class ReceiptGenerator {
     required Map<String, dynamic> payment,
     required double totalExpected,
     required double remainingBalance,
+    double totalReduction = 0.0,
+    String? scholarshipName,
     List<Map<String, dynamic>>? allPayments,
     Map<String, dynamic>? headerConfig,
     PdfPageFormat pageFormat = PdfPageFormat.a5,
@@ -789,6 +830,8 @@ class ReceiptGenerator {
       payment: payment,
       totalExpected: totalExpected,
       remainingBalance: remainingBalance,
+      totalReduction: totalReduction,
+      scholarshipName: scholarshipName,
       allPayments: allPayments,
       headerConfig: headerConfig,
       pageFormat: pageFormat,
@@ -829,6 +872,7 @@ class ReceiptGenerator {
     pw.Font font,
     pw.Font boldFont, {
     bool isA5 = false,
+    PdfColor? valueColor,
   }) {
     return pw.Row(
       children: [
@@ -846,7 +890,7 @@ class ReceiptGenerator {
             style: pw.TextStyle(
               font: boldFont,
               fontSize: isA5 ? 6 : 7.5,
-              color: const PdfColor.fromInt(0xFF1E293B),
+              color: valueColor ?? const PdfColor.fromInt(0xFF1E293B),
             ),
           ),
         ),

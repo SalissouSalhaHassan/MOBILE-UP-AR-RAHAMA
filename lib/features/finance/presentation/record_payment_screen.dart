@@ -275,14 +275,18 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
               context: context,
               student: {
                 ...student,
-                'nom_etudiant': student['nom_etudiant'] ?? 'Élève',
-                'num_admission': student['num_admission'] ?? student['matricule'] ?? '—',
-                'classe': student['classe'] ?? '—',
+                'nom_etudiant': student['nom_etudiant'] ?? student['nomPrenom'] ?? 'Élève',
+                'num_admission': student['num_admission'] ?? student['matricule'] ?? '-',
+                'classe': student['classe'] ?? '-',
                 'educational_level': student['educational_level'] ?? student['educationalLevel'] ?? student['niveau'],
               },
               payment: paymentRecord,
               totalExpected: _expected,
               remainingBalance: _newBalance,
+              totalReduction: _reduction + reduction,
+              scholarshipName: widget.feeData['scholarship_name'] ??
+                  widget.feeData['scholarship']?['name'] ??
+                  student['scholarship_name'],
               headerConfig: headerConfig,
             );
           } catch (e) {
