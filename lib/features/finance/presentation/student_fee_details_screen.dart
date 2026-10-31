@@ -230,9 +230,11 @@ class _StudentFeeDetailsScreenState extends State<StudentFeeDetailsScreen> {
       }
     }
 
-    final allPaymentsList = _currentFee['payments'] != null
-        ? List<Map<String, dynamic>>.from(_currentFee['payments'])
-        : null;
+    final allPaymentsList = _payments.isNotEmpty
+        ? List<Map<String, dynamic>>.from(_payments)
+        : (_currentFee['payments'] != null
+            ? List<Map<String, dynamic>>.from(_currentFee['payments'])
+            : null);
 
     final totalReduction = _safeDouble(_currentFee['total_reduction']);
     final schName = _currentFee['scholarship_name'] ??
