@@ -52,10 +52,23 @@ class StudentsRepository {
         boxName: OfflineStoreManager.boxStudents,
         key: _studentsCacheKey,
       );
+      // Keep a temp student only while its create operation is still queued;
+      // otherwise (dead-lettered / already synced) it is a ghost record.
+      final queuedTempIds = <String>{};
+      try {
+        for (final op in locator<OfflineQueueManager>().getPendingOperations()) {
+          if (op.table == 'students') {
+            final lid = (op.data['localId'] ?? op.data['id'])?.toString();
+            if (lid != null) queuedTempIds.add(lid);
+          }
+        }
+      } catch (_) {}
       final pendingLocal = previousCache.where((s) {
         final id = s['id']?.toString() ?? '';
         final adm = (s['num_admission'] ?? '').toString().trim().toLowerCase();
-        return id.startsWith('temp_std_') && !serverAdmissions.contains(adm);
+        return id.startsWith('temp_std_') &&
+            queuedTempIds.contains(id) &&
+            !serverAdmissions.contains(adm);
       }).toList();
 
       final merged = <Map<String, dynamic>>[...pendingLocal, ...list];
@@ -481,8 +494,22 @@ class StudentsRepository {
           'payload': dataToSend,
         },
       );
+      if (response['success'] != true) {
+        return {
+          'success': false,
+          'error': response['error']?.toString() ?? "Échec d'enregistrement de l'élève sur le serveur.",
+        };
+      }
+      await _cacheSavedStudent(dataToSend, response);
       return response;
     } catch (e) {
+      // Only a real connectivity failure may fall back to the offline queue.
+      // A server rejection (duplicate admission number, 403, 500...) must be
+      // reported to the user instead of silently keeping the student local.
+      if (e is MobileApiException && !e.isNetworkError) {
+        debugPrint('Server rejected student save: ${e.message}');
+        return {'success': false, 'error': e.message};
+      }
       debugPrint('Error saving student online, falling back to offline queue: $e');
       final localTempId = "temp_std_${DateTime.now().millisecondsSinceEpoch}";
       dataToSend['localId'] = localTempId;
@@ -516,6 +543,33 @@ class StudentsRepository {
         'localId': localTempId,
         'message': 'Connexion instable. Élève mis en file d\'attente de synchronisation.',
       };
+    }
+  }
+
+  /// After a successful online save, put the server-confirmed student (with its
+  /// real id) in the local cache so the list is consistent with the server.
+  Future<void> _cacheSavedStudent(Map<String, dynamic> sent, Map<String, dynamic> response) async {
+    try {
+      final cacheManager = locator<OfflineStoreManager>();
+      final realId = (response['data'] is Map ? response['data']['id'] : null) ?? response['studentId'];
+      if (realId == null) return;
+      final list = cacheManager.getDataList(
+        boxName: OfflineStoreManager.boxStudents,
+        key: _studentsCacheKey,
+      );
+      final adm = (sent['num_admission'] ?? '').toString().trim().toLowerCase();
+      list.removeWhere((s) =>
+          s['id']?.toString() == realId.toString() ||
+          (s['id']?.toString().startsWith('temp_std_') == true &&
+              (s['num_admission'] ?? '').toString().trim().toLowerCase() == adm));
+      list.insert(0, {...sent, 'id': realId});
+      await cacheManager.saveDataList(
+        boxName: OfflineStoreManager.boxStudents,
+        key: _studentsCacheKey,
+        data: list,
+      );
+    } catch (e) {
+      debugPrint('Failed to cache saved student: $e');
     }
   }
 

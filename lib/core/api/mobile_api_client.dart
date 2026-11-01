@@ -29,9 +29,13 @@ class MobileApiConfig {
 }
 
 class MobileApiException implements Exception {
-  const MobileApiException(this.message);
+  const MobileApiException(this.message, {this.isNetworkError = false});
 
   final String message;
+
+  /// True only when the server could not be reached (timeout / no connection).
+  /// Server-side rejections (4xx/5xx, business errors) are NOT network errors.
+  final bool isNetworkError;
 
   @override
   String toString() => message;
@@ -267,7 +271,7 @@ class MobileApiClient {
         e.type == DioExceptionType.receiveTimeout ||
         e.type == DioExceptionType.sendTimeout ||
         e.type == DioExceptionType.connectionError) {
-      return const MobileApiException('Connexion indisponible pour le moment.');
+      return const MobileApiException('Connexion indisponible pour le moment.', isNetworkError: true);
     }
     return MobileApiException(e.message ?? 'Erreur de communication réseau.');
   }

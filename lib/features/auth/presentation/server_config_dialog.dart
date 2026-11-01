@@ -38,7 +38,7 @@ class _ServerConfigDialogState extends State<ServerConfigDialog> {
   final List<Map<String, dynamic>> _presets = [
     {
       'label': 'Production Principale (U P AR-RAHAMA)',
-      'url': 'https://web-ces-bourja.vercel.app',
+      'url': 'https://web-up-ar-rahama.vercel.app',
       'tag': 'Live Prod',
       'badgeColor': const Color(0xFF10B981),
       'description': 'Serveur Vercel officiel actif (U P AR-RAHAMA)',
