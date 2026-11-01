@@ -41,26 +41,32 @@ class StudentsRepository {
       final response = await _apiClient.getJson('/api/mobile/students$queryParam');
       final list = List<Map<String, dynamic>>.from(response['data'] ?? []);
       
-      if (list.isNotEmpty) {
-        // Chunked batch saving into local cache to avoid memory spikes
-        const int chunkSize = 100;
-        final List<Map<String, dynamic>> aggregated = [];
-        for (var i = 0; i < list.length; i += chunkSize) {
-          final end = (i + chunkSize < list.length) ? i + chunkSize : list.length;
-          final chunk = list.sublist(i, end);
-          aggregated.addAll(chunk);
-          // Yield to event loop to allow UI/background tasks to breathe
-          await Future.delayed(const Duration(milliseconds: 5));
-        }
+      // The server is the source of truth: always refresh the local cache,
+      // even when the server list is empty (students deleted on the web must
+      // disappear from the mobile app). Only students created offline and not
+      // yet synchronised (temporary ids) are preserved.
+      final serverAdmissions = list
+          .map((s) => (s['num_admission'] ?? '').toString().trim().toLowerCase())
+          .toSet();
+      final previousCache = cacheManager.getDataList(
+        boxName: OfflineStoreManager.boxStudents,
+        key: _studentsCacheKey,
+      );
+      final pendingLocal = previousCache.where((s) {
+        final id = s['id']?.toString() ?? '';
+        final adm = (s['num_admission'] ?? '').toString().trim().toLowerCase();
+        return id.startsWith('temp_std_') && !serverAdmissions.contains(adm);
+      }).toList();
 
-        await cacheManager.saveDataList(
-          boxName: OfflineStoreManager.boxStudents,
-          key: _studentsCacheKey,
-          data: aggregated,
-        );
-      }
-      
-      return list;
+      final merged = <Map<String, dynamic>>[...pendingLocal, ...list];
+
+      await cacheManager.saveDataList(
+        boxName: OfflineStoreManager.boxStudents,
+        key: _studentsCacheKey,
+        data: merged,
+      );
+
+      return merged;
     } catch (e) {
       debugPrint('Error fetching students list from API: $e. Attempting direct Supabase query fallback with chunked streaming...');
       try {
